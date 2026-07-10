@@ -9,7 +9,35 @@ export type Partner = {
   role: string;
   creds: string;
   bio: string;
+  photo?: string;
 };
+
+function PartnerAvatar({
+  partner,
+  size,
+}: {
+  partner: Partner;
+  size: "grid" | "card";
+}) {
+  const sizeClasses =
+    size === "grid" ? "w-[110px] h-[110px] text-[30px]" : "w-[92px] h-[92px] text-[26px]";
+  if (partner.photo) {
+    return (
+      <img
+        src={partner.photo}
+        alt={partner.name}
+        className={`${sizeClasses} rounded-full object-cover mx-auto`}
+      />
+    );
+  }
+  return (
+    <div
+      className={`${sizeClasses} rounded-full bg-navy text-white font-bold flex items-center justify-center mx-auto`}
+    >
+      {partner.initials}
+    </div>
+  );
+}
 
 export default function PartnersShowcase({
   partners,
@@ -39,8 +67,8 @@ export default function PartnersShowcase({
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className="text-center cursor-pointer flex flex-col items-center justify-start"
           >
-            <div className="w-[110px] h-[110px] rounded-full bg-navy text-white text-[30px] font-bold flex items-center justify-center mx-auto mb-4.5">
-              {p.initials}
+            <div className="mb-4.5">
+              <PartnerAvatar partner={p} size="grid" />
             </div>
             <h3 className="text-base font-bold text-navy">{p.name}</h3>
             <div className="text-[13px] font-semibold text-blue mt-1.5">
@@ -83,9 +111,7 @@ export default function PartnersShowcase({
                   />
                 </svg>
               </button>
-              <div className="w-[92px] h-[92px] rounded-full bg-navy text-white text-[26px] font-bold flex items-center justify-center mx-auto">
-                {selected.initials}
-              </div>
+              <PartnerAvatar partner={selected} size="card" />
               <h3 className="mt-5 text-[22px] font-bold text-navy">
                 {selected.name}
               </h3>

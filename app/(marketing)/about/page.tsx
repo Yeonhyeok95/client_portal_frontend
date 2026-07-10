@@ -23,11 +23,12 @@ const principles = [
 
 const partners = [
   {
-    initials: "HA",
-    name: "Helen Ashworth",
-    role: "Managing Partner",
-    creds: "CFA · 29 years in practice",
-    bio: "Helen has led the firm since 2012, having joined at its founding from the private client group of a global bank. She chairs the investment committee and personally advises a small number of founding families. She believes the firm's obligation is measured in decades, not quarters.",
+    initials: "RL",
+    name: "Rura Lee",
+    photo: "/partners/rura-lee.jpg",
+    role: "Yeon's lover",
+    creds: "Registered Nurse",
+    bio: "Rura Lee loves Yeon forever.",
   },
   {
     initials: "RO",
