@@ -23,12 +23,12 @@ const principles = [
 
 const partners = [
   {
-    initials: "RL",
-    name: "Rura Lee",
+    initials: "NT",
+    name: "Nigel TSA",
     photo: "/partners/rura-lee.jpg",
-    role: "Yeon's lover",
-    creds: "Registered Nurse",
-    bio: "Rura Lee loves Yeon forever.",
+    role: "Senior Adviser",
+    creds: "MAppFin(CFA&WM) BEc(Fin&FinEc) AdvDipFS(FP) DipFS(FP).",
+    bio: "testestesetawefawefaefasef.",
   },
   {
     initials: "RO",
