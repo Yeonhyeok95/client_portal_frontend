@@ -25,7 +25,7 @@ const partners = [
   {
     initials: "NT",
     name: "Nigel TSA",
-    photo: "/partners/rura-lee.jpg",
+    photo: "/partners/tedBear.png",
     role: "Senior Adviser",
     creds: "MAppFin(CFA&WM) BEc(Fin&FinEc) AdvDipFS(FP) DipFS(FP).",
     bio: "testestesetawefawefaefasef.",
