@@ -27,6 +27,7 @@ type ButtonProps = {
   href?: string;
   onClick?: () => void;
   type?: "button" | "submit";
+  disabled?: boolean;
 };
 
 export default function Button({
@@ -37,19 +38,22 @@ export default function Button({
   href,
   onClick,
   type = "button",
+  disabled = false,
 }: ButtonProps) {
-  const classes = `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`;
+  const classes = `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${
+    disabled ? "opacity-50 pointer-events-none" : ""
+  } ${className}`;
 
   if (href) {
     return (
-      <Link href={href} className={classes} onClick={onClick}>
+      <Link href={href} className={classes} onClick={onClick} aria-disabled={disabled}>
         {children}
       </Link>
     );
   }
 
   return (
-    <button type={type} className={classes} onClick={onClick}>
+    <button type={type} className={classes} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );

@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
-import { getAuthState, setAuthState } from "@/lib/portalAuth";
+import { getAuthState, login } from "@/lib/portalAuth";
 
 export default function PortalLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     const auth = getAuthState();
@@ -18,12 +19,19 @@ export default function PortalLoginPage() {
     else if (auth === "twofa") router.replace("/portal/verify");
   }, [router]);
 
-  function doLogin() {
+  async function doLogin() {
+    if (pending) return;
     if (!email.trim() || !password.trim()) {
       setError("Please enter your email and password.");
       return;
     }
-    setAuthState("twofa");
+    setPending(true);
+    const result = await login(email.trim(), password);
+    setPending(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
     router.push("/portal/verify");
   }
 
@@ -77,8 +85,12 @@ export default function PortalLoginPage() {
               </div>
             )}
             <div className="mt-1">
-              <Button onClick={doLogin} className="w-full justify-center">
-                Continue
+              <Button
+                onClick={doLogin}
+                disabled={pending}
+                className="w-full justify-center"
+              >
+                {pending ? "Signing in…" : "Continue"}
               </Button>
             </div>
             <div className="text-center text-[13px] font-semibold text-blue cursor-pointer">
@@ -100,7 +112,7 @@ export default function PortalLoginPage() {
           </div>
         </div>
         <div className="text-center mt-5.5 text-xs text-muted leading-[1.6]">
-          Demo: any email and password.
+          Demo: client@tsaptest.com / PortalDemo!2026
           <br />
           <Link href="/" className="text-body font-semibold no-underline">
             Return to website

@@ -12,13 +12,7 @@ export type Partner = {
   photo?: string;
 };
 
-function PartnerAvatar({
-  partner,
-  size,
-}: {
-  partner: Partner;
-  size: "grid" | "card";
-}) {
+function PartnerAvatar({ partner, size }: { partner: Partner; size: "grid" | "card" }) {
   const sizeClasses =
     size === "grid" ? "w-[110px] h-[110px] text-[30px]" : "w-[92px] h-[92px] text-[26px]";
   if (partner.photo) {
@@ -39,11 +33,7 @@ function PartnerAvatar({
   );
 }
 
-export default function PartnersShowcase({
-  partners,
-}: {
-  partners: Partner[];
-}) {
+export default function PartnersShowcase({ partners }: { partners: Partner[] }) {
   const [selected, setSelected] = useState<Partner | null>(null);
 
   useEffect(() => {
@@ -71,9 +61,7 @@ export default function PartnersShowcase({
               <PartnerAvatar partner={p} size="grid" />
             </div>
             <h3 className="text-base font-bold text-navy">{p.name}</h3>
-            <div className="text-[13px] font-semibold text-blue mt-1.5">
-              {p.role}
-            </div>
+            <div className="text-[13px] font-semibold text-blue mt-1.5">{p.role}</div>
             <div className="text-xs text-body mt-1.5">{p.creds}</div>
           </motion.button>
         ))}
@@ -112,16 +100,10 @@ export default function PartnersShowcase({
                 </svg>
               </button>
               <PartnerAvatar partner={selected} size="card" />
-              <h3 className="mt-5 text-[22px] font-bold text-navy">
-                {selected.name}
-              </h3>
-              <div className="text-sm font-semibold text-blue mt-1.5">
-                {selected.role}
-              </div>
+              <h3 className="mt-5 text-[22px] font-bold text-navy">{selected.name}</h3>
+              <div className="text-sm font-semibold text-blue mt-1.5">{selected.role}</div>
               <div className="text-xs text-body mt-1.5">{selected.creds}</div>
-              <p className="mt-5 text-sm leading-[1.7] text-body text-left">
-                {selected.bio}
-              </p>
+              <p className="mt-5 text-sm leading-[1.7] text-body text-left whitespace-pre-line">{selected.bio}</p>
             </motion.div>
           </motion.div>
         )}

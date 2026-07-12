@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Button from "./Button";
+import { API_URL } from "@/lib/api";
 
 export default function ContactForm({
   initialMessage = "",
@@ -13,14 +14,38 @@ export default function ContactForm({
   const [phone, setPhone] = useState("");
   const [msg, setMsg] = useState(initialMessage);
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  function submit() {
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (pending) return;
     if (!name.trim() || !email.trim() || email.indexOf("@") < 0) {
       setError("Please provide a name and a valid email address.");
       return;
     }
-    setSent(true);
+    setPending(true);
+    try {
+      const res = await fetch(`${API_URL}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          message: msg.trim(),
+        }),
+      });
+      if (!res.ok) {
+        setError("Something went wrong. Please try again shortly.");
+        return;
+      }
+      setSent(true);
+    } catch {
+      setError("Cannot reach the server. Please try again shortly.");
+    } finally {
+      setPending(false);
+    }
   }
 
   if (sent) {
@@ -47,7 +72,7 @@ export default function ContactForm({
   }
 
   return (
-    <div className="flex flex-col gap-4.5">
+    <form onSubmit={submit} className="flex flex-col gap-4.5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
         <div className="flex flex-col gap-2">
           <label className="text-[13px] font-bold text-navy">Name *</label>
@@ -102,10 +127,10 @@ export default function ContactForm({
         <div className="text-[13px] font-semibold text-red">{error}</div>
       )}
       <div className="self-start">
-        <Button size="md" onClick={submit}>
-          Send request
+        <Button size="md" type="submit" disabled={pending}>
+          {pending ? "Sending…" : "Send request"}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

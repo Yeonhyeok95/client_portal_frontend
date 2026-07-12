@@ -31,25 +31,25 @@ const partners = [
     bio: "testestesetawefawefaefasef.",
   },
   {
-    initials: "RO",
-    name: "Raymond Okafor",
+    initials: "AA",
+    name: "Aaaa Aaaa",
     role: "Chief Investment Officer",
-    creds: "CFA · 24 years in practice",
-    bio: "Raymond oversees portfolio construction and manager selection across the firm. Before joining in 2005 he managed institutional fixed income portfolios, an experience that still shapes his preference for owning fewer, better-understood assets. He writes the firm's quarterly investment letter.",
+    creds: "24 years in practice",
+    bio: "hahahah\nahhaahh\nahahah\nasdfasdf",
   },
   {
-    initials: "MB",
-    name: "Marcus Bell",
+    initials: "BB",
+    name: "Bbbb Bbbb",
     role: "Partner, Client Advisory",
-    creds: "CFP® · 18 years in practice",
-    bio: "Marcus leads the client advisory practice and serves as the first point of contact for most new families. His work centers on translating a family's intentions into a written plan that survives generations, market cycles, and changes of circumstance alike.",
+    creds: "50 years in practice",
+    bio: "asdf\nasdfasdf\nasdf\n",
   },
   {
-    initials: "SL",
-    name: "Sarah Lindqvist",
+    initials: "CC",
+    name: "Cccc Cccc",
     role: "Partner, Trusts & Estates",
-    creds: "JD, TEP · 21 years in practice",
-    bio: "Sarah practiced trust and estate law for over a decade before joining the firm to lead its estates work. She coordinates closely with each family's outside counsel, ensuring structures are kept current and documents say what the family actually intends.",
+    creds: "100 years in practice",
+    bio: "asdf\nasdfasdf\nasdf\n",
   },
 ];
 
@@ -89,7 +89,7 @@ export default function AboutPage() {
 
       <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-20 pb-[90px]">
         <div className="text-center mb-12">
-          <div className="text-sm font-bold tracking-[2px] text-blue uppercase">Leadership</div>
+          <div className="text-sm font-bold tracking-[2px] text-blue uppercase">Team</div>
           <h2 className="mt-3.5 text-[32px] sm:text-[40px] font-bold text-navy">The partners</h2>
         </div>
         <PartnersShowcase partners={partners} />
