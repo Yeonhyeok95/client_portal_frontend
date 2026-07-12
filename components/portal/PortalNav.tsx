@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { usePortalData } from "./PortalDataContext";
-import { clearAuthState } from "@/lib/portalAuth";
+import { clearAuthState, getUser } from "@/lib/portalAuth";
 
 const TABS = [
   { label: "Dashboard", href: "/portal/dashboard" },
@@ -16,6 +16,14 @@ export default function PortalNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { masked, toggleMasked, unread, markMessagesRead } = usePortalData();
+
+  const userName = getUser()?.name ?? "";
+  const initials = userName
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   function signOut() {
     clearAuthState();
@@ -75,10 +83,10 @@ export default function PortalNav() {
           </button>
           <div className="flex items-center gap-2.5 bg-white/8 rounded-full py-[5px] pr-4 pl-[5px]">
             <div className="w-[34px] h-[34px] rounded-full bg-blue text-white text-[13px] font-bold flex items-center justify-center">
-              EW
+              {initials}
             </div>
             <span className="text-[13px] font-semibold text-white">
-              Eleanor Whitfield
+              {userName}
             </span>
           </div>
           <button

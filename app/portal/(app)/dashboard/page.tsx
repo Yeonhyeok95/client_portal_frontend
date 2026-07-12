@@ -1,16 +1,9 @@
 "use client";
 
 import { usePortalData } from "@/components/portal/PortalDataContext";
-import {
-  accounts,
-  activity,
-  totalPortfolioValue,
-  dayChangeAmount,
-  dayChangeMasked,
-  incomeYtd,
-  cashValue,
-  formatMoney,
-} from "@/lib/portalData";
+import { formatMoney } from "@/lib/portalData";
+import { formatAsOf } from "@/lib/portfolio";
+import { getUser } from "@/lib/portalAuth";
 
 const allocation = [
   { label: "Global equities 52%", color: "rgb(37,43,66)" },
@@ -21,17 +14,37 @@ const allocation = [
 ];
 
 export default function DashboardPage() {
-  const { masked } = usePortalData();
+  const { masked, portfolio, portfolioError } = usePortalData();
+
+  if (portfolioError) {
+    return (
+      <div className="max-w-[1280px] mx-auto px-6 sm:px-10 pt-7.5 pb-15">
+        <div className="bg-white rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.06)] py-14 px-10 text-center text-sm font-semibold text-body">
+          {portfolioError}
+        </div>
+      </div>
+    );
+  }
+  if (!portfolio) {
+    return (
+      <div className="max-w-[1280px] mx-auto px-6 sm:px-10 pt-7.5 pb-15">
+        <div className="text-[13px] font-semibold text-muted">Loading…</div>
+      </div>
+    );
+  }
+
+  const { summary, accounts, activity } = portfolio;
+  const firstName = (getUser()?.name ?? "").split(" ")[0];
 
   return (
     <div className="max-w-[1280px] mx-auto px-6 sm:px-10 pt-7.5 pb-15">
       <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-6">
         <div>
           <div className="text-[13px] font-semibold text-body">
-            Monday, July 6, 2026 · Values as of prior close
+            {formatAsOf(portfolio.asOf)}
           </div>
           <h1 className="mt-1.5 text-[26px] sm:text-[30px] font-bold text-navy">
-            Good morning, Eleanor
+            Good morning{firstName ? `, ${firstName}` : ""}
           </h1>
         </div>
         <div className="text-xs font-semibold text-muted">
@@ -46,10 +59,10 @@ export default function DashboardPage() {
             Total portfolio
           </div>
           <div className="text-[32px] sm:text-[38px] font-bold mt-2.5">
-            {formatMoney(totalPortfolioValue, masked)}
+            {formatMoney(summary.totalValue, masked)}
           </div>
           <div className="text-[13px] font-semibold text-green mt-2">
-            {masked ? dayChangeMasked : dayChangeAmount} today
+            {masked ? summary.dayChangeMasked : summary.dayChange} today
           </div>
         </div>
         <div className="bg-white rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.06)] py-7 px-6.5">
@@ -57,7 +70,7 @@ export default function DashboardPage() {
             YTD return
           </div>
           <div className="text-[28px] sm:text-[30px] font-bold text-green mt-2.5">
-            +8.4%
+            {summary.ytdReturn}
           </div>
           <div className="text-xs font-semibold text-body mt-2">
             Net of all fees
@@ -68,7 +81,7 @@ export default function DashboardPage() {
             Income YTD
           </div>
           <div className="text-[28px] sm:text-[30px] font-bold text-navy mt-2.5">
-            {formatMoney(incomeYtd, masked)}
+            {formatMoney(summary.incomeYtd, masked)}
           </div>
           <div className="text-xs font-semibold text-body mt-2">
             Dividends and coupons
@@ -79,10 +92,10 @@ export default function DashboardPage() {
             Cash available
           </div>
           <div className="text-[28px] sm:text-[30px] font-bold text-navy mt-2.5">
-            {formatMoney(cashValue, masked)}
+            {formatMoney(summary.cashAvailable, masked)}
           </div>
           <div className="text-xs font-semibold text-body mt-2">
-            Earning 4.1% APY
+            Earning {summary.cashApy}
           </div>
         </div>
       </div>

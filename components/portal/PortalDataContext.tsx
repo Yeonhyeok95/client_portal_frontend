@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { initialMessages, type PortalMessage } from "@/lib/portalData";
+import { fetchPortfolio, type Portfolio } from "@/lib/portfolio";
 
 type PortalDataContextValue = {
   masked: boolean;
@@ -14,6 +15,8 @@ type PortalDataContextValue = {
   draft: string;
   setDraft: (v: string) => void;
   sendMessage: () => void;
+  portfolio: Portfolio | null;
+  portfolioError: string;
 };
 
 const PortalDataContext = createContext<PortalDataContextValue | null>(null);
@@ -25,6 +28,26 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
   const [messages, setMessages] = useState<PortalMessage[]>(initialMessages);
   const [draft, setDraft] = useState("");
   const replyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+  const [portfolioError, setPortfolioError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPortfolio()
+      .then((data) => {
+        if (!cancelled) setPortfolio(data);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPortfolioError(
+            "Unable to load portfolio data. Please try again shortly.",
+          );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function sendMessage() {
     const text = draft.trim();
@@ -58,6 +81,8 @@ export function PortalDataProvider({ children }: { children: React.ReactNode }) 
         draft,
         setDraft,
         sendMessage,
+        portfolio,
+        portfolioError,
       }}
     >
       {children}

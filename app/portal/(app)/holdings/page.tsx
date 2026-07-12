@@ -2,16 +2,33 @@
 
 import { useState } from "react";
 import { usePortalData } from "@/components/portal/PortalDataContext";
-import { allHoldings, accountFilterNames, formatMoney } from "@/lib/portalData";
+import { formatMoney } from "@/lib/portalData";
 
 export default function HoldingsPage() {
-  const { masked } = usePortalData();
+  const { masked, portfolio, portfolioError } = usePortalData();
   const [filter, setFilter] = useState("All");
+
+  if (portfolioError) {
+    return (
+      <div className="max-w-[1280px] mx-auto px-6 sm:px-10 pt-7.5 pb-15">
+        <div className="bg-white rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.06)] py-14 px-10 text-center text-sm font-semibold text-body">
+          {portfolioError}
+        </div>
+      </div>
+    );
+  }
+  if (!portfolio) {
+    return (
+      <div className="max-w-[1280px] mx-auto px-6 sm:px-10 pt-7.5 pb-15">
+        <div className="text-[13px] font-semibold text-muted">Loading…</div>
+      </div>
+    );
+  }
 
   const shown =
     filter === "All"
-      ? allHoldings
-      : allHoldings.filter((h) => h.account === filter);
+      ? portfolio.holdings
+      : portfolio.holdings.filter((h) => h.account === filter);
   const total = shown.reduce((t, h) => t + h.value, 0);
 
   return (
@@ -26,7 +43,7 @@ export default function HoldingsPage() {
       </div>
 
       <div className="flex gap-2.5 mb-5.5 flex-wrap">
-        {accountFilterNames.map((label) => {
+        {portfolio.accountFilters.map((label) => {
           const active = filter === label;
           return (
             <button
