@@ -11,6 +11,8 @@ import { API_URL } from "./api";
 const KEY = "tsaptest_portal_auth";
 const TOKEN_KEY = "tsaptest_portal_token";
 const USER_KEY = "tsaptest_portal_user";
+const PRE_AUTH_KEY = "tsaptest_portal_preauth";
+const MASKED_EMAIL_KEY = "tsaptest_portal_masked_email";
 
 export { API_URL };
 
@@ -30,6 +32,13 @@ export function clearAuthState() {
   window.sessionStorage.removeItem(KEY);
   window.sessionStorage.removeItem(TOKEN_KEY);
   window.sessionStorage.removeItem(USER_KEY);
+  window.sessionStorage.removeItem(PRE_AUTH_KEY);
+  window.sessionStorage.removeItem(MASKED_EMAIL_KEY);
+}
+
+export function getMaskedEmail(): string {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem(MASKED_EMAIL_KEY) ?? "";
 }
 
 export function getToken(): string | null {
@@ -68,18 +77,66 @@ export async function login(
     };
   }
   if (!res.ok) {
-    let message = "Unable to sign in. Please try again.";
-    try {
-      const data = await res.json();
-      if (typeof data?.message === "string") message = data.message;
-    } catch {
-      // 응답 본문이 JSON이 아니면 기본 메시지 사용
-    }
-    return { ok: false, message };
+    return { ok: false, message: await extractMessage(res, "Unable to sign in. Please try again.") };
+  }
+  // 1단계 통과 — 정식 토큰이 아니라 pre-auth 토큰만 받는다 (코드는 이메일로)
+  const data = (await res.json()) as { preAuthToken: string; maskedEmail: string };
+  window.sessionStorage.setItem(PRE_AUTH_KEY, data.preAuthToken);
+  window.sessionStorage.setItem(MASKED_EMAIL_KEY, data.maskedEmail);
+  setAuthState("twofa");
+  return { ok: true };
+}
+
+export async function verifyCode(code: string): Promise<LoginResult> {
+  const preAuth = window.sessionStorage.getItem(PRE_AUTH_KEY);
+  if (!preAuth) {
+    return { ok: false, message: "Your sign-in session has expired. Please sign in again." };
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/auth/verify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${preAuth}`,
+      },
+      body: JSON.stringify({ code }),
+    });
+  } catch {
+    return { ok: false, message: "Cannot reach the server. Please try again shortly." };
+  }
+  if (!res.ok) {
+    return { ok: false, message: await extractMessage(res, "Verification failed. Please try again.") };
   }
   const data = (await res.json()) as { token: string; user: PortalUser };
   window.sessionStorage.setItem(TOKEN_KEY, data.token);
   window.sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
-  setAuthState("twofa");
+  window.sessionStorage.removeItem(PRE_AUTH_KEY);
+  window.sessionStorage.removeItem(MASKED_EMAIL_KEY);
+  setAuthState("signedin");
   return { ok: true };
+}
+
+export async function resendCode(): Promise<boolean> {
+  const preAuth = window.sessionStorage.getItem(PRE_AUTH_KEY);
+  if (!preAuth) return false;
+  try {
+    const res = await fetch(`${API_URL}/api/auth/resend`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${preAuth}` },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function extractMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const data = await res.json();
+    if (typeof data?.message === "string") return data.message;
+  } catch {
+    // 응답 본문이 JSON이 아니면 기본 메시지 사용
+  }
+  return fallback;
 }

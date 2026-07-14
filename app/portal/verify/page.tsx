@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
-import { getAuthState, getUser, setAuthState } from "@/lib/portalAuth";
+import {
+  getAuthState,
+  getMaskedEmail,
+  getUser,
+  resendCode,
+  verifyCode,
+} from "@/lib/portalAuth";
 
 function homeForRole(): string {
   return getUser()?.role === "ADVISOR" ? "/portal/advisor" : "/portal/dashboard";
@@ -13,20 +19,42 @@ export default function PortalVerifyPage() {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [pending, setPending] = useState(false);
+  const [maskedEmail, setMaskedEmail] = useState("");
 
   useEffect(() => {
     const auth = getAuthState();
     if (auth === "signedin") router.replace(homeForRole());
     else if (auth === "none") router.replace("/portal/login");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    else setMaskedEmail(getMaskedEmail());
   }, [router]);
 
-  function doVerify() {
+  async function doVerify() {
+    if (pending) return;
     if (code.replace(/\D/g, "").length !== 6) {
       setError("Please enter the six-digit code.");
       return;
     }
-    setAuthState("signedin");
+    setPending(true);
+    const result = await verifyCode(code);
+    setPending(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
     router.push(homeForRole());
+  }
+
+  async function doResend() {
+    setError("");
+    setNotice("");
+    if (await resendCode()) {
+      setNotice("A new code has been sent.");
+    } else {
+      setError("Could not send a new code. Please sign in again.");
+    }
   }
 
   return (
@@ -59,8 +87,8 @@ export default function PortalVerifyPage() {
           </div>
           <h1 className="text-[22px] font-bold text-navy">Verify it is you</h1>
           <p className="mt-2.5 mb-6.5 text-[13px] leading-[1.6] text-body">
-            A six-digit code was sent to the mobile number ending in{" "}
-            <strong className="text-navy">··42</strong>.
+            A six-digit code was sent to{" "}
+            <strong className="text-navy">{maskedEmail || "your email"}</strong>.
           </p>
           <input
             value={code}
@@ -78,20 +106,32 @@ export default function PortalVerifyPage() {
               {error}
             </div>
           )}
+          {notice && (
+            <div className="mt-3 text-[13px] font-semibold text-green">
+              {notice}
+            </div>
+          )}
           <div
             className="mt-5"
             style={{ opacity: code.length === 6 ? 1 : 0.45 }}
           >
-            <Button onClick={doVerify} className="w-full justify-center">
-              Verify and sign in
+            <Button
+              onClick={doVerify}
+              disabled={pending}
+              className="w-full justify-center"
+            >
+              {pending ? "Verifying…" : "Verify and sign in"}
             </Button>
           </div>
-          <div className="mt-4.5 text-[13px] font-semibold text-blue cursor-pointer">
+          <button
+            onClick={doResend}
+            className="mt-4.5 text-[13px] font-semibold text-blue cursor-pointer bg-transparent border-0 p-0"
+          >
             Send a new code
-          </div>
+          </button>
         </div>
         <div className="text-center mt-5.5 text-xs text-muted">
-          Demo: any six digits.
+          Demo: the code is delivered to the firm&apos;s admin inbox.
         </div>
       </div>
     </div>
