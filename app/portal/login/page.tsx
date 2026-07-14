@@ -37,7 +37,14 @@ export default function PortalLoginPage() {
       setError(result.message);
       return;
     }
-    router.push("/portal/verify");
+    if (result.twofaRequired) {
+      router.push("/portal/verify");
+    } else {
+      // 서버 2FA 토글 꺼짐 — 코드 입력 없이 바로 홈으로
+      router.push(
+        getUser()?.role === "ADVISOR" ? "/portal/advisor" : "/portal/dashboard",
+      );
+    }
   }
 
   return (

@@ -57,7 +57,11 @@ export function getUser(): PortalUser | null {
   }
 }
 
-export type LoginResult = { ok: true } | { ok: false; message: string };
+export type LoginResult =
+  | { ok: true; twofaRequired: boolean }
+  | { ok: false; message: string };
+
+export type VerifyResult = { ok: true } | { ok: false; message: string };
 
 export async function login(
   email: string,
@@ -79,15 +83,27 @@ export async function login(
   if (!res.ok) {
     return { ok: false, message: await extractMessage(res, "Unable to sign in. Please try again.") };
   }
+  const data = (await res.json()) as {
+    preAuthToken?: string;
+    maskedEmail?: string;
+    token?: string;
+    user?: PortalUser;
+  };
+  if (data.token && data.user) {
+    // 서버의 2FA 토글이 꺼져 있음 (TWOFA_ENABLED=false) — 바로 로그인 완료
+    window.sessionStorage.setItem(TOKEN_KEY, data.token);
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    setAuthState("signedin");
+    return { ok: true, twofaRequired: false };
+  }
   // 1단계 통과 — 정식 토큰이 아니라 pre-auth 토큰만 받는다 (코드는 이메일로)
-  const data = (await res.json()) as { preAuthToken: string; maskedEmail: string };
-  window.sessionStorage.setItem(PRE_AUTH_KEY, data.preAuthToken);
-  window.sessionStorage.setItem(MASKED_EMAIL_KEY, data.maskedEmail);
+  window.sessionStorage.setItem(PRE_AUTH_KEY, data.preAuthToken ?? "");
+  window.sessionStorage.setItem(MASKED_EMAIL_KEY, data.maskedEmail ?? "");
   setAuthState("twofa");
-  return { ok: true };
+  return { ok: true, twofaRequired: true };
 }
 
-export async function verifyCode(code: string): Promise<LoginResult> {
+export async function verifyCode(code: string): Promise<VerifyResult> {
   const preAuth = window.sessionStorage.getItem(PRE_AUTH_KEY);
   if (!preAuth) {
     return { ok: false, message: "Your sign-in session has expired. Please sign in again." };
