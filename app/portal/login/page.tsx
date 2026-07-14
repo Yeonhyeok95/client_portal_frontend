@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
-import { getAuthState, login } from "@/lib/portalAuth";
+import { getAuthState, getUser, login } from "@/lib/portalAuth";
 
 export default function PortalLoginPage() {
   const router = useRouter();
@@ -15,8 +15,13 @@ export default function PortalLoginPage() {
 
   useEffect(() => {
     const auth = getAuthState();
-    if (auth === "signedin") router.replace("/portal/dashboard");
-    else if (auth === "twofa") router.replace("/portal/verify");
+    if (auth === "signedin") {
+      router.replace(
+        getUser()?.role === "ADVISOR" ? "/portal/advisor" : "/portal/dashboard",
+      );
+    } else if (auth === "twofa") {
+      router.replace("/portal/verify");
+    }
   }, [router]);
 
   async function doLogin() {

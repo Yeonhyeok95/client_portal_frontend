@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
-import { getAuthState, setAuthState } from "@/lib/portalAuth";
+import { getAuthState, getUser, setAuthState } from "@/lib/portalAuth";
+
+function homeForRole(): string {
+  return getUser()?.role === "ADVISOR" ? "/portal/advisor" : "/portal/dashboard";
+}
 
 export default function PortalVerifyPage() {
   const router = useRouter();
@@ -12,7 +16,7 @@ export default function PortalVerifyPage() {
 
   useEffect(() => {
     const auth = getAuthState();
-    if (auth === "signedin") router.replace("/portal/dashboard");
+    if (auth === "signedin") router.replace(homeForRole());
     else if (auth === "none") router.replace("/portal/login");
   }, [router]);
 
@@ -22,7 +26,7 @@ export default function PortalVerifyPage() {
       return;
     }
     setAuthState("signedin");
-    router.push("/portal/dashboard");
+    router.push(homeForRole());
   }
 
   return (

@@ -62,26 +62,4 @@ export const documentCategories = [
   "Reports",
 ];
 
-export type PortalMessage = {
-  who: "advisor" | "me";
-  text: string;
-  meta: string;
-};
-
-export const initialMessages: PortalMessage[] = [
-  {
-    who: "advisor",
-    text: "Good morning Eleanor — the Q2 statements are posted under Documents. Nothing requires action, but do note the municipal ladder reinvestment summarized on page 4.",
-    meta: "Marcus · Jul 2, 9:14 AM",
-  },
-  {
-    who: "me",
-    text: "Thank you, Marcus. Could we revisit the 529 funding for the grandchildren before September?",
-    meta: "You · Jul 3, 8:02 AM",
-  },
-  {
-    who: "advisor",
-    text: "Of course. I will prepare projections for each of the three plans and propose some times for next week.",
-    meta: "Marcus · Jul 3, 10:41 AM",
-  },
-];
+// 채팅 더미(initialMessages)는 백엔드 chat_messages 시드로 이관됨 (lib/chat.ts 참조)

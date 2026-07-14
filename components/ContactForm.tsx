@@ -4,11 +4,7 @@ import { useState } from "react";
 import Button from "./Button";
 import { API_URL } from "@/lib/api";
 
-export default function ContactForm({
-  initialMessage = "",
-}: {
-  initialMessage?: string;
-}) {
+export default function ContactForm({ initialMessage = "" }: { initialMessage?: string }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -17,7 +13,7 @@ export default function ContactForm({
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.SubmitEvent) {
     e.preventDefault();
     if (pending) return;
     if (!name.trim() || !email.trim() || email.indexOf("@") < 0) {
@@ -64,8 +60,7 @@ export default function ContactForm({
         </div>
         <h3 className="text-2xl font-bold text-navy">Received, thank you</h3>
         <p className="mx-auto mt-3 max-w-[380px] text-sm leading-[1.6] text-body">
-          A partner will reply within two business days from a personal
-          address. No newsletters will follow.
+          A partner will reply soon from a personal address. No newsletters will follow.
         </p>
       </div>
     );
@@ -109,9 +104,7 @@ export default function ContactForm({
         />
       </div>
       <div className="flex flex-col gap-2">
-        <label className="text-[13px] font-bold text-navy">
-          What would you like to discuss?
-        </label>
+        <label className="text-[13px] font-bold text-navy">What would you like to discuss?</label>
         <textarea
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
@@ -120,12 +113,9 @@ export default function ContactForm({
         />
       </div>
       <div className="text-xs leading-[1.5] text-body">
-        Correspondence is held in confidence and is not added to any
-        marketing list.
+        Correspondence is held in confidence and is not added to any marketing list.
       </div>
-      {error && (
-        <div className="text-[13px] font-semibold text-red">{error}</div>
-      )}
+      {error && <div className="text-[13px] font-semibold text-red">{error}</div>}
       <div className="self-start">
         <Button size="md" type="submit" disabled={pending}>
           {pending ? "Sending…" : "Send request"}
