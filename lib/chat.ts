@@ -21,11 +21,23 @@ export type ConversationSummary = {
   clientEmail: string;
   lastMessage: string;
   lastMessageAt: string;
+  unreadCount: number;
 };
 
 export type MyConversation = {
   conversationId: number;
   messages: ChatMessage[];
+  hasMore: boolean;
+};
+
+export type ThreadPage = {
+  messages: ChatMessage[];
+  hasMore: boolean;
+};
+
+export type Unread = {
+  conversationId: number;
+  unreadCount: number;
 };
 
 async function authedGet<T>(path: string): Promise<T> {
@@ -40,12 +52,33 @@ export function fetchMyConversation(): Promise<MyConversation> {
   return authedGet("/api/chat/conversation");
 }
 
+export function fetchUnread(): Promise<Unread> {
+  return authedGet("/api/chat/unread");
+}
+
 export function fetchConversations(): Promise<ConversationSummary[]> {
   return authedGet("/api/chat/conversations");
 }
 
-export function fetchThread(conversationId: number): Promise<ChatMessage[]> {
-  return authedGet(`/api/chat/conversations/${conversationId}/messages`);
+/** before = 이 메시지 ID보다 오래된 페이지 (생략 시 최신 페이지). */
+export function fetchThread(
+  conversationId: number,
+  before?: number,
+): Promise<ThreadPage> {
+  const query = before != null ? `?before=${before}` : "";
+  return authedGet(`/api/chat/conversations/${conversationId}/messages${query}`);
+}
+
+/** 지금 최신 메시지까지 읽음 처리 (호출자 역할의 마커만 전진). 실패는 무시해도 되는 부가 동작. */
+export async function markConversationRead(conversationId: number): Promise<void> {
+  try {
+    await fetch(`${API_URL}/api/chat/conversations/${conversationId}/read`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+    });
+  } catch {
+    // 배지가 다음 로드에서 다시 맞춰지므로 조용히 무시
+  }
 }
 
 /**

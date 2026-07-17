@@ -15,7 +15,7 @@ const TABS = [
 export default function PortalNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { masked, toggleMasked, unread, markMessagesRead } = usePortalData();
+  const { masked, toggleMasked, unreadCount, markMessagesRead } = usePortalData();
 
   const userName = getUser()?.name ?? "";
   const initials = userName
@@ -55,8 +55,10 @@ export default function PortalNav() {
                   }`}
                 >
                   {tab.label}
-                  {tab.href === "/portal/messages" && unread && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue inline-block" />
+                  {tab.href === "/portal/messages" && unreadCount > 0 && (
+                    <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-blue text-white text-[10px] font-bold flex items-center justify-center">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
                   )}
                 </Link>
               );

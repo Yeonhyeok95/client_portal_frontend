@@ -2,17 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Client } from "@stomp/stompjs";
+import type { Client, StompSubscription } from "@stomp/stompjs";
 import {
   createChatClient,
   fetchConversations,
   fetchThread,
   formatMessageMeta,
+  markConversationRead,
   sendChatMessage,
   type ChatMessage,
   type ConversationSummary,
 } from "@/lib/chat";
 import { clearAuthState, getAuthState, getUser } from "@/lib/portalAuth";
+
+/** 목록은 항상 최근 대화 순. */
+function sortByRecent(list: ConversationSummary[]): ConversationSummary[] {
+  return [...list].sort(
+    (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
+  );
+}
 
 export default function AdvisorPage() {
   const router = useRouter();
@@ -20,11 +28,16 @@ export default function AdvisorPage() {
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [thread, setThread] = useState<ChatMessage[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingEarlier, setLoadingEarlier] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
+  const [connected, setConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
   const selectedIdRef = useRef<number | null>(null);
+  const threadSubRef = useRef<StompSubscription | null>(null);
   const threadEndRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef(true);
 
   useEffect(() => {
     if (getAuthState() === "signedin" && getUser()?.role === "ADVISOR") {
@@ -42,8 +55,9 @@ export default function AdvisorPage() {
     fetchConversations()
       .then((list) => {
         if (cancelled) return;
-        setConversations(list);
-        if (list.length > 0) selectConversation(list[0].id);
+        const sorted = sortByRecent(list);
+        setConversations(sorted);
+        if (sorted.length > 0) selectConversation(sorted[0].id);
       })
       .catch(() => {
         if (!cancelled) {
@@ -53,23 +67,26 @@ export default function AdvisorPage() {
 
     const stomp = createChatClient();
     stomp.onConnect = () => {
-      // 상담사는 전용 토픽 하나로 모든 대화방의 새 메시지를 받는다
+      setConnected(true);
+      // 상담사 목록 토픽: 대화방 요약이 온다 — 목록에 없던 새 대화방도
+      // 이 요약 하나로 즉시 목록에 추가할 수 있다 (upsert)
       stomp.subscribe("/topic/advisor", (frame) => {
-        const incoming = JSON.parse(frame.body) as ChatMessage;
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === incoming.conversationId
-              ? { ...c, lastMessage: incoming.content, lastMessageAt: incoming.sentAt }
-              : c,
-          ),
-        );
-        if (incoming.conversationId === selectedIdRef.current) {
-          setThread((prev) =>
-            prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming],
-          );
+        const summary = JSON.parse(frame.body) as ConversationSummary;
+        const viewing = summary.id === selectedIdRef.current;
+        if (viewing && summary.unreadCount > 0) {
+          // 지금 보고 있는 방 — 서버 마커도 바로 전진시키고 배지는 켜지 않는다
+          markConversationRead(summary.id);
         }
+        const shown = viewing ? { ...summary, unreadCount: 0 } : summary;
+        setConversations((prev) =>
+          sortByRecent([...prev.filter((c) => c.id !== shown.id), shown]),
+        );
       });
+      // 재연결 시 보고 있던 방의 스레드 구독도 복구
+      if (selectedIdRef.current != null) subscribeThread(selectedIdRef.current);
     };
+    stomp.onDisconnect = () => setConnected(false);
+    stomp.onWebSocketClose = () => setConnected(false);
     stomp.activate();
     clientRef.current = stomp;
 
@@ -82,22 +99,67 @@ export default function AdvisorPage() {
   }, [authorized]);
 
   useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ block: "end" });
+    if (stickToBottomRef.current) {
+      threadEndRef.current?.scrollIntoView({ block: "end" });
+    }
   }, [thread]);
+
+  /** 선택한 방의 메시지 스트림 구독 (이전 방 구독은 해제). */
+  function subscribeThread(id: number) {
+    const client = clientRef.current;
+    if (!client || !client.connected) return;
+    threadSubRef.current?.unsubscribe();
+    threadSubRef.current = client.subscribe(
+      `/topic/conversations/${id}`,
+      (frame) => {
+        const incoming = JSON.parse(frame.body) as ChatMessage;
+        if (incoming.conversationId !== selectedIdRef.current) return;
+        stickToBottomRef.current = true;
+        setThread((prev) =>
+          prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming],
+        );
+      },
+    );
+  }
 
   function selectConversation(id: number) {
     setSelectedId(id);
     selectedIdRef.current = id;
     setThread([]);
+    setHasMore(false);
+    stickToBottomRef.current = true;
     fetchThread(id)
-      .then(setThread)
+      .then((page) => {
+        setThread(page.messages);
+        setHasMore(page.hasMore);
+      })
       .catch(() => setError("Unable to load this conversation."));
+    subscribeThread(id);
+    // 열었으니 읽음 처리 — 서버 마커 전진 + 목록 배지 소등
+    markConversationRead(id);
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c)),
+    );
+  }
+
+  function loadEarlier() {
+    if (selectedId == null || thread.length === 0 || loadingEarlier) return;
+    setLoadingEarlier(true);
+    stickToBottomRef.current = false;
+    fetchThread(selectedId, thread[0].id)
+      .then((page) => {
+        setThread((prev) => [...page.messages, ...prev]);
+        setHasMore(page.hasMore);
+      })
+      .catch(() => setError("Unable to load earlier messages."))
+      .finally(() => setLoadingEarlier(false));
   }
 
   function send() {
     const text = draft.trim();
     const client = clientRef.current;
-    if (!text || !client || !client.connected || selectedId == null) return;
+    if (!text || !client || !connected || selectedId == null) return;
+    stickToBottomRef.current = true;
     sendChatMessage(client, selectedId, text);
     setDraft("");
   }
@@ -160,8 +222,13 @@ export default function AdvisorPage() {
                   }`}
                 >
                   <div className="flex justify-between items-baseline gap-2">
-                    <span className="text-sm font-bold text-navy">
+                    <span className="text-sm font-bold text-navy flex items-center gap-2">
                       {c.clientName}
+                      {c.unreadCount > 0 && (
+                        <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-blue text-white text-[10px] font-bold inline-flex items-center justify-center">
+                          {c.unreadCount > 99 ? "99+" : c.unreadCount}
+                        </span>
+                      )}
                     </span>
                     <span className="text-[11px] font-semibold text-muted whitespace-nowrap">
                       {new Date(c.lastMessageAt).toLocaleDateString("en-US", {
@@ -190,6 +257,15 @@ export default function AdvisorPage() {
               )}
             </div>
             <div className="p-6.5 flex flex-col gap-4 min-h-[360px] max-h-[520px] overflow-y-auto">
+              {hasMore && (
+                <button
+                  onClick={loadEarlier}
+                  disabled={loadingEarlier}
+                  className="cursor-pointer self-center text-xs font-bold text-blue bg-offwhite rounded-full px-4 py-2 disabled:opacity-50"
+                >
+                  {loadingEarlier ? "Loading…" : "Load earlier messages"}
+                </button>
+              )}
               {thread.map((m) => {
                 const mine = m.senderRole === "ADVISOR";
                 return (

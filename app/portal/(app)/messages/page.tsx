@@ -2,66 +2,89 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  createChatClient,
   fetchMyConversation,
+  fetchThread,
   formatMessageMeta,
   sendChatMessage,
   type ChatMessage,
 } from "@/lib/chat";
-import type { Client } from "@stomp/stompjs";
+import { usePortalData } from "@/components/portal/PortalDataContext";
 
 export default function MessagesPage() {
+  // WS 연결은 PortalDataContext가 소유(배지와 공유) — 이 페이지는 빌려 쓴다
+  const { chatClient, chatConnected, markMessagesRead } = usePortalData();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingEarlier, setLoadingEarlier] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
-  const clientRef = useRef<Client | null>(null);
   const threadEndRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef(true);
 
   useEffect(() => {
     let cancelled = false;
-    let stomp: Client | null = null;
-
     fetchMyConversation()
       .then((conv) => {
         if (cancelled) return;
         setConversationId(conv.conversationId);
         setMessages(conv.messages);
-
-        stomp = createChatClient();
-        stomp.onConnect = () => {
-          stomp?.subscribe(`/topic/conversations/${conv.conversationId}`, (frame) => {
-            const incoming = JSON.parse(frame.body) as ChatMessage;
-            setMessages((prev) =>
-              prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming],
-            );
-          });
-        };
-        stomp.activate();
-        clientRef.current = stomp;
+        setHasMore(conv.hasMore);
+        markMessagesRead(); // 최신 페이지를 봤으니 읽음 처리 + 배지 소등
       })
       .catch(() => {
         if (!cancelled) {
           setError("Unable to load messages. Please try again shortly.");
         }
       });
-
     return () => {
       cancelled = true;
-      stomp?.deactivate();
-      clientRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 실시간 수신: 컨텍스트의 연결이 준비된 뒤 이 화면 전용 구독을 하나 더 얹는다.
+  // (컨텍스트의 배지 구독과 별개 — 같은 연결의 다중 구독은 STOMP에서 정상)
   useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ block: "end" });
+    if (!chatConnected || !chatClient || conversationId == null) return;
+    const subscription = chatClient.subscribe(
+      `/topic/conversations/${conversationId}`,
+      (frame) => {
+        const incoming = JSON.parse(frame.body) as ChatMessage;
+        setMessages((prev) =>
+          prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming],
+        );
+        if (incoming.senderRole === "ADVISOR") markMessagesRead();
+      },
+    );
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatConnected, chatClient, conversationId]);
+
+  useEffect(() => {
+    if (stickToBottomRef.current) {
+      threadEndRef.current?.scrollIntoView({ block: "end" });
+    }
   }, [messages]);
+
+  function loadEarlier() {
+    if (conversationId == null || messages.length === 0 || loadingEarlier) return;
+    setLoadingEarlier(true);
+    stickToBottomRef.current = false; // 과거를 보는 중 — 맨 아래로 끌어내리지 않는다
+    fetchThread(conversationId, messages[0].id)
+      .then((page) => {
+        setMessages((prev) => [...page.messages, ...prev]);
+        setHasMore(page.hasMore);
+      })
+      .catch(() => setError("Unable to load earlier messages."))
+      .finally(() => setLoadingEarlier(false));
+  }
 
   function send() {
     const text = draft.trim();
-    const client = clientRef.current;
-    if (!text || !client || !client.connected || conversationId == null) return;
-    sendChatMessage(client, conversationId, text);
+    if (!text || !chatClient || !chatConnected || conversationId == null) return;
+    stickToBottomRef.current = true;
+    sendChatMessage(chatClient, conversationId, text);
     setDraft("");
   }
 
@@ -94,6 +117,15 @@ export default function MessagesPage() {
         <div className="p-6.5 flex flex-col gap-4 min-h-[320px] max-h-[480px] overflow-y-auto">
           {error && (
             <div className="text-[13px] font-semibold text-red">{error}</div>
+          )}
+          {hasMore && (
+            <button
+              onClick={loadEarlier}
+              disabled={loadingEarlier}
+              className="cursor-pointer self-center text-xs font-bold text-blue bg-offwhite rounded-full px-4 py-2 disabled:opacity-50"
+            >
+              {loadingEarlier ? "Loading…" : "Load earlier messages"}
+            </button>
           )}
           {messages.map((m) => {
             const mine = m.senderRole === "CLIENT";
