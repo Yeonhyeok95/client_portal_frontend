@@ -56,6 +56,13 @@ const partners = [
 export default function AboutPage() {
   return (
     <div>
+      <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-20 pb-[90px]">
+        <div className="text-center mb-12">
+          <div className="text-sm font-bold tracking-[2px] text-blue uppercase">Team</div>
+          <h2 className="mt-3.5 text-[32px] sm:text-[40px] font-bold text-navy">The partners</h2>
+        </div>
+        <PartnersShowcase partners={partners} />
+      </div>
       <PageHero eyebrow="About the firm" title="Built to be small" />
 
       <div className="max-w-[820px] mx-auto px-6 sm:px-10 pt-20 pb-16">
@@ -85,14 +92,6 @@ export default function AboutPage() {
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-20 pb-[90px]">
-        <div className="text-center mb-12">
-          <div className="text-sm font-bold tracking-[2px] text-blue uppercase">Team</div>
-          <h2 className="mt-3.5 text-[32px] sm:text-[40px] font-bold text-navy">The partners</h2>
-        </div>
-        <PartnersShowcase partners={partners} />
       </div>
     </div>
   );
