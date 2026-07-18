@@ -2,7 +2,7 @@ import Link from "next/link";
 import Button from "@/components/Button";
 import HeroScrollIntro from "@/components/HeroScrollIntro";
 import Icon from "@/components/Icon";
-import { articles } from "@/lib/articles";
+import NewsTeaser from "@/components/NewsTeaser";
 
 const stats = [
   { value: "$4.2B", label: "Assets under advisement" },
@@ -162,49 +162,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Insights preview */}
-      <div className="bg-offwhite px-6 sm:px-10 py-20">
-        <div className="max-w-[1120px] mx-auto">
-          <div className="flex justify-between items-end mb-11">
-            <div>
-              <div className="text-sm font-bold tracking-[2px] text-blue uppercase">
-                Insights
-              </div>
-              <h2 className="mt-3.5 text-[32px] sm:text-[40px] font-bold text-navy">
-                Recent writing
-              </h2>
-            </div>
-            <Link
-              href="/insights"
-              className="text-sm font-bold text-blue no-underline"
-            >
-              All insights
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {articles.slice(0, 3).map((a) => (
-              <Link
-                key={a.title}
-                href="/insights"
-                className="block bg-white rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.07)] overflow-hidden no-underline"
-              >
-                <div className="h-40" style={{ background: a.gradient }} />
-                <div className="p-6">
-                  <div className="text-xs font-bold text-blue tracking-[1px] uppercase">
-                    {a.cat}
-                  </div>
-                  <h3 className="mt-2.5 text-lg font-bold leading-[1.4] text-navy">
-                    {a.title}
-                  </h3>
-                  <div className="mt-3.5 text-xs text-muted font-semibold">
-                    {a.meta}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Insights preview — 실시간 뉴스 3건 (실패 시 섹션 자체를 숨김) */}
+      <NewsTeaser />
 
       {/* CTA band */}
       <div className="max-w-[1280px] mx-auto px-6 sm:px-10 py-[90px]">

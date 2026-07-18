@@ -1,25 +1,52 @@
 "use client";
 
-import { useState } from "react";
-import { articles, type Article } from "@/lib/articles";
+import { useEffect, useState } from "react";
+import {
+  CATEGORY_GRADIENTS,
+  CATEGORY_LABELS,
+  fetchNews,
+  formatNewsMeta,
+  type NewsArticle,
+  type NewsCategory,
+} from "@/lib/news";
 
-const CATEGORIES: Array<Article["cat"] | "All"> = [
+const FILTERS: Array<NewsCategory | "All"> = [
   "All",
-  "Markets",
-  "Planning",
-  "Tax",
+  "MARKETS",
+  "BUSINESS",
+  "TAX_ACCOUNTING",
 ];
 
 export default function InsightsGrid() {
-  const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("All");
+  const [cat, setCat] = useState<(typeof FILTERS)[number]>("All");
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchNews()
+      .then((list) => {
+        if (!cancelled) setArticles(list);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered =
-    cat === "All" ? articles : articles.filter((a) => a.cat === cat);
+    cat === "All" ? articles : articles.filter((a) => a.category === cat);
 
   return (
     <div>
       <div className="flex flex-wrap gap-2.5 justify-center mb-12">
-        {CATEGORIES.map((c) => {
+        {FILTERS.map((c) => {
           const active = c === cat;
           return (
             <button
@@ -31,33 +58,56 @@ export default function InsightsGrid() {
                   : "bg-white text-body border-line"
               }`}
             >
-              {c}
+              {c === "All" ? "All" : CATEGORY_LABELS[c]}
             </button>
           );
         })}
       </div>
+      {loading && (
+        <div className="text-center text-sm font-semibold text-muted py-16">
+          Loading the latest insights…
+        </div>
+      )}
+      {error && (
+        <div className="text-center text-sm font-semibold text-muted py-16">
+          News is temporarily unavailable. Please check back in a moment.
+        </div>
+      )}
+      {!loading && !error && filtered.length === 0 && (
+        <div className="text-center text-sm font-semibold text-muted py-16">
+          No articles in this category yet.
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
         {filtered.map((a) => (
-          <div
-            key={a.title}
-            className="bg-white rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.07)] overflow-hidden"
+          <a
+            key={a.id}
+            href={a.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-white rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.07)] overflow-hidden no-underline"
           >
-            <div className="h-[150px]" style={{ background: a.gradient }} />
+            <div
+              className="h-[150px]"
+              style={{ background: CATEGORY_GRADIENTS[a.category] }}
+            />
             <div className="p-6">
               <div className="text-xs font-bold text-blue tracking-[1px] uppercase">
-                {a.cat}
+                {CATEGORY_LABELS[a.category]}
               </div>
               <h3 className="mt-2.5 text-lg font-bold leading-[1.4] text-navy">
                 {a.title}
               </h3>
-              <p className="mt-2.5 text-[13px] leading-[1.55] text-body">
-                {a.blurb}
-              </p>
+              {a.summary && (
+                <p className="mt-2.5 text-[13px] leading-[1.55] text-body line-clamp-3">
+                  {a.summary}
+                </p>
+              )}
               <div className="mt-3.5 text-xs text-muted font-semibold">
-                {a.meta}
+                {formatNewsMeta(a)}
               </div>
             </div>
-          </div>
+          </a>
         ))}
       </div>
     </div>
