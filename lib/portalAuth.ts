@@ -3,8 +3,15 @@ export type PortalAuthState = "none" | "twofa" | "signedin";
 export type PortalUser = {
   email: string;
   name: string;
-  role: "CLIENT" | "ADVISOR";
+  role: "CLIENT" | "ADVISOR" | "ADMIN";
 };
+
+/** 로그인 직후/재진입 시 역할별 홈 경로. */
+export function homePathFor(role: PortalUser["role"] | undefined): string {
+  if (role === "ADVISOR") return "/portal/advisor";
+  if (role === "ADMIN") return "/portal/admin";
+  return "/portal/dashboard";
+}
 
 import { API_URL } from "./api";
 

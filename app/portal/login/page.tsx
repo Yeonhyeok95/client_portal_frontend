@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
-import { getAuthState, getUser, login } from "@/lib/portalAuth";
+import { getAuthState, getUser, homePathFor, login } from "@/lib/portalAuth";
 
 export default function PortalLoginPage() {
   const router = useRouter();
@@ -16,9 +16,7 @@ export default function PortalLoginPage() {
   useEffect(() => {
     const auth = getAuthState();
     if (auth === "signedin") {
-      router.replace(
-        getUser()?.role === "ADVISOR" ? "/portal/advisor" : "/portal/dashboard",
-      );
+      router.replace(homePathFor(getUser()?.role));
     } else if (auth === "twofa") {
       router.replace("/portal/verify");
     }
@@ -41,9 +39,7 @@ export default function PortalLoginPage() {
       router.push("/portal/verify");
     } else {
       // 서버 2FA 토글 꺼짐 — 코드 입력 없이 바로 홈으로
-      router.push(
-        getUser()?.role === "ADVISOR" ? "/portal/advisor" : "/portal/dashboard",
-      );
+      router.push(homePathFor(getUser()?.role));
     }
   }
 
