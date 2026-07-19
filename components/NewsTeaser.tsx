@@ -38,17 +38,12 @@ export default function NewsTeaser() {
       <div className="max-w-[1120px] mx-auto">
         <div className="flex justify-between items-end mb-11">
           <div>
-            <div className="text-sm font-bold tracking-[2px] text-blue uppercase">
-              Insights
-            </div>
+            <div className="text-sm font-bold tracking-[2px] text-blue uppercase">Insights</div>
             <h2 className="mt-3.5 text-[32px] sm:text-[40px] font-bold text-navy">
               Market headlines
             </h2>
           </div>
-          <Link
-            href="/insights"
-            className="text-sm font-bold text-blue no-underline"
-          >
+          <Link href="/insights" className="text-sm font-bold text-blue no-underline">
             All insights
           </Link>
         </div>
@@ -61,10 +56,7 @@ export default function NewsTeaser() {
               rel="noopener noreferrer"
               className="block bg-white rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.07)] overflow-hidden no-underline"
             >
-              <div
-                className="h-40"
-                style={{ background: CATEGORY_GRADIENTS[a.category] }}
-              >
+              <div className="h-40 p-2" style={{ background: CATEGORY_GRADIENTS[a.category] }}>
                 <img
                   src={a.imageUrl}
                   alt=""
@@ -79,12 +71,8 @@ export default function NewsTeaser() {
                 <div className="text-xs font-bold text-blue tracking-[1px] uppercase">
                   {CATEGORY_LABELS[a.category]}
                 </div>
-                <h3 className="mt-2.5 text-lg font-bold leading-[1.4] text-navy">
-                  {a.title}
-                </h3>
-                <div className="mt-3.5 text-xs text-muted font-semibold">
-                  {formatNewsMeta(a)}
-                </div>
+                <h3 className="mt-2.5 text-lg font-bold leading-[1.4] text-navy">{a.title}</h3>
+                <div className="mt-3.5 text-xs text-muted font-semibold">{formatNewsMeta(a)}</div>
               </div>
             </a>
           ))}
