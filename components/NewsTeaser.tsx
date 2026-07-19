@@ -64,7 +64,17 @@ export default function NewsTeaser() {
               <div
                 className="h-40"
                 style={{ background: CATEGORY_GRADIENTS[a.category] }}
-              />
+              >
+                <img
+                  src={a.imageUrl}
+                  alt=""
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
               <div className="p-6">
                 <div className="text-xs font-bold text-blue tracking-[1px] uppercase">
                   {CATEGORY_LABELS[a.category]}

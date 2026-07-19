@@ -9,6 +9,7 @@ export type NewsArticle = {
   title: string;
   summary: string | null;
   url: string;
+  imageUrl: string;
   publishedAt: string | null;
 };
 
@@ -19,7 +20,7 @@ export const CATEGORY_LABELS: Record<NewsCategory, string> = {
   TAX_ACCOUNTING: "Tax & Accounting",
 };
 
-/** 외부 뉴스에는 일관된 이미지가 없어 기존 카드처럼 카테고리별 그라디언트를 쓴다 */
+/** 썸네일 로드 실패 시(핫링크 차단 등) 카드가 비지 않도록 까는 폴백 배경 */
 export const CATEGORY_GRADIENTS: Record<NewsCategory, string> = {
   MARKETS: "linear-gradient(135deg, rgb(219,190,255), rgb(142,194,242))",
   BUSINESS: "linear-gradient(135deg, rgb(196,242,220), rgb(142,194,242))",
