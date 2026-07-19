@@ -56,7 +56,7 @@ export default function NewsTeaser() {
               rel="noopener noreferrer"
               className="block bg-white rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.07)] overflow-hidden no-underline"
             >
-              <div className="h-40 p-2" style={{ background: CATEGORY_GRADIENTS[a.category] }}>
+              <div className="h-40" style={{ background: CATEGORY_GRADIENTS[a.category] }}>
                 <img
                   src={a.imageUrl}
                   alt=""

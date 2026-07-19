@@ -41,21 +41,21 @@ export default function Header() {
         overHero ? "bg-transparent" : "bg-white"
       }`}
     >
-      <div className="max-w-[1280px] mx-auto bg-navy rounded-[34px] h-12 flex items-center justify-between px-7 text-xs font-semibold text-white/60 tracking-[0.2px]">
+      <div className="max-w-[1280px] h-8 mx-auto bg-navy rounded-[34px] sm:h-12 shadow-[0_4px_12px_rgba(0,0,0,0.2)] flex items-center justify-between px-7 text-xs font-semibold text-white/60 tracking-[0.2px]">
         <div className="hidden sm:flex gap-6 items-center">
           <span>Advisory line +1 212 555 0148</span>
           <span className="text-white/30">·</span>
           <span>clients@tsaptest.com</span>
         </div>
         <Link href="/portal" className="text-white flex items-center gap-2 ml-auto no-underline">
-          Client login
+          Client portal
           <svg width="8" height="12" viewBox="0 0 8 14" fill="none">
             <path d="M 0 12 L 5 7 L 0 2 L 1 0 L 8 7 L 1 14 L 0 12 Z" fill="currentColor" />
           </svg>
         </Link>
       </div>
 
-      <div className="max-w-[1280px] mx-auto mt-2.5 bg-white rounded-[34px] h-[58px] shadow-[0_4px_12px_rgba(0,0,0,0.1)] flex items-center justify-between px-8 relative">
+      <div className="max-w-[1280px] mx-auto mt-2.5 bg-white rounded-[34px] h-12 sm:h-14  shadow-[0_4px_12px_rgba(0,0,0,0.1)] flex items-center justify-between px-8 relative">
         <Link href="/" className="font-bold text-[22px] text-navy no-underline">
           TSAPtest
         </Link>
