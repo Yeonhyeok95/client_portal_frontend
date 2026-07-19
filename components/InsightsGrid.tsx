@@ -62,6 +62,8 @@ export default function InsightsGrid() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  // "All"이면 세 섹션 전부, 카테고리를 고르면 그 섹션만
+  const [filter, setFilter] = useState<NewsCategory | "ALL">("ALL");
   const [pages, setPages] = useState<Record<NewsCategory, number>>({
     MARKETS: 1,
     BUSINESS: 1,
@@ -100,9 +102,31 @@ export default function InsightsGrid() {
     );
   }
 
+  const visibleSections =
+    filter === "ALL" ? SECTIONS : SECTIONS.filter((s) => s === filter);
+
   return (
-    <div className="flex flex-col gap-16">
-      {SECTIONS.map((section) => {
+    <div>
+      <div className="flex flex-wrap gap-2.5 justify-center mb-12">
+        {(["ALL", ...SECTIONS] as const).map((c) => {
+          const active = c === filter;
+          return (
+            <button
+              key={c}
+              onClick={() => setFilter(c)}
+              className={`cursor-pointer px-5.5 py-2.5 rounded-full text-[13px] font-bold tracking-[0.2px] border transition-colors ${
+                active
+                  ? "bg-navy text-white border-navy"
+                  : "bg-white text-body border-line"
+              }`}
+            >
+              {c === "ALL" ? "All" : CATEGORY_LABELS[c]}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-col gap-16">
+      {visibleSections.map((section) => {
         const all = articles
           .filter((a) => a.category === section)
           .slice(0, PAGE_SIZE * MAX_PAGES);
@@ -154,6 +178,7 @@ export default function InsightsGrid() {
           </section>
         );
       })}
+      </div>
     </div>
   );
 }
